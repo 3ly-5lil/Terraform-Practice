@@ -8,13 +8,13 @@ resource "aws_vpc" "main" {
 }
 
 resource "aws_subnet" "this" {
-  count      = var.subnet_count
-  cidr_block = "10.0.${count.index}.0/24"
+  for_each = var.subnet_configs
+  cidr_block = each.value.cidr
 
   vpc_id = aws_vpc.main.id
 	
   tags = {
-    Name    = "${local.project} - Terraform Subnet ${count.index + 1}"
+    Name    = "${local.project} - Terraform Subnet ${each.key}"
     Project = local.project
   }
 }

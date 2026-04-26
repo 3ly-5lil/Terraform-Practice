@@ -1,25 +1,50 @@
+locals {
+  ami_ids = {
+    "ubuntu"             = data.aws_ami.ubuntu.id
+    "windows_sql_server" = data.aws_ami.windows_sql_server.id
+  }
+}
+
 data "aws_ami" "ubuntu" {
   owners      = ["099720109477"]
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+    values = ["ubuntu*amd64*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+data "aws_ami" "windows_sql_server" {
+  owners      = ["801119661308"]
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["*Win*SQL*2017*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
   }
 }
 
 resource "aws_instance" "main" {
-  count = var.ec2_instance_count
+  # for_each = var.ec2_instance_configs_map
+  count = var.ec2_instance_configs.length
 
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t2.micro"
+  ami           = local.ami_ids[each.value.ami]
+  instance_type = each.value.instance_type
 
-  subnet_id = aws_subnet.this[
-    count.index % var.subnet_count
-  ].id
+  subnet_id = aws_subnet.this[each.value.subnet_name].id
 
   tags = {
     Project = local.project
-    Name    = "${local.project} - Instance ${count.index}"
+    Name    = "${local.project} - Instance ${each.key}"
   }
 }

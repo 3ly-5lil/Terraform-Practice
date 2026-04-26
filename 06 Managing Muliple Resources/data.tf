@@ -1,3 +1,3 @@
 locals {
-	project = "Managing Multiple Resources"
+  project = "Managing Multiple Resources"
 }
